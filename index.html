@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>청년센터 새글 알리미</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="새글알리미">
+<meta name="theme-color" content="#6C4CEB">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --bg:#0f1020;
+    --card:#181933;
+    --card2:#20223f;
+    --accent:#8b7bff;
+    --accent2:#6C4CEB;
+    --text:#f2f2fa;
+    --text-dim:#a9a9c4;
+    --new:#ff6b81;
+    --ok:#4ade80;
+    --warn:#facc15;
+    --border:#2c2d4f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    padding-bottom:60px;
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:linear-gradient(135deg,#6C4CEB,#8b7bff);
+    padding:18px 18px 16px;
+    padding-top:calc(18px + env(safe-area-inset-top));
+    box-shadow:0 4px 16px rgba(0,0,0,.25);
+  }
+  header h1{margin:0;font-size:19px;font-weight:700;}
+  header p{margin:4px 0 0;font-size:12.5px;opacity:.85;}
+  .toolbar{
+    display:flex;gap:8px;padding:12px 16px;flex-wrap:wrap;
+  }
+  button.pill{
+    border:none;border-radius:999px;padding:9px 14px;
+    font-size:13px;font-weight:600;background:var(--card2);
+    color:var(--text);display:flex;align-items:center;gap:6px;
+  }
+  button.pill:active{opacity:.7;}
+  button.primary{background:var(--accent2);color:#fff;}
+  .section{padding:6px 16px 18px;}
+  .section h2{font-size:14px;color:var(--text-dim);margin:14px 0 8px;font-weight:600;letter-spacing:.02em;}
+  .card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:14px;padding:13px 14px;margin-bottom:10px;
+  }
+  .feed-item{
+    display:block;text-decoration:none;color:inherit;
+    background:var(--card);border:1px solid var(--border);
+    border-radius:14px;padding:13px 14px;margin-bottom:10px;
+    position:relative;
+  }
+  .feed-item.unread{border-color:var(--accent);background:linear-gradient(135deg,rgba(139,123,255,.14),var(--card));}
+  .feed-item.unread::before{
+    content:"NEW";position:absolute;top:10px;right:12px;
+    font-size:10px;font-weight:800;color:var(--new);letter-spacing:.05em;
+  }
+  .feed-site{font-size:11.5px;color:var(--accent);font-weight:700;margin-bottom:4px;}
+  .feed-title{font-size:14.5px;line-height:1.4;font-weight:600;}
+  .feed-time{font-size:11px;color:var(--text-dim);margin-top:6px;}
+  .empty{color:var(--text-dim);font-size:13.5px;padding:20px 4px;text-align:center;}
+  .site-row{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--card);border:1px solid var(--border);
+    border-radius:12px;padding:12px 14px;margin-bottom:8px;
+  }
+  .site-row .info{flex:1;min-width:0;}
+  .site-name{font-size:14px;font-weight:600;}
+  .site-status{font-size:11.5px;margin-top:3px;}
+  .status-ok{color:var(--ok);}
+  .status-warn{color:var(--warn);}
+  .status-off{color:var(--text-dim);}
+  .goto{
+    text-decoration:none;background:var(--card2);color:var(--text);
+    font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:999px;white-space:nowrap;margin-left:10px;
+  }
+  .badge{
+    display:inline-block;background:var(--accent2);color:#fff;
+    font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;margin-left:6px;
+  }
+  #lastChecked{font-size:12px;color:var(--text-dim);padding:0 16px;margin-top:-4px;}
+  .notif-banner{
+    margin:10px 16px 0;padding:12px 14px;border-radius:12px;
+    background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.35);
+    font-size:12.5px;color:var(--warn);display:flex;justify-content:space-between;align-items:center;gap:10px;
+  }
+  .notif-banner button{
+    border:none;background:var(--warn);color:#231a00;font-weight:700;
+    border-radius:999px;padding:7px 12px;font-size:12px;white-space:nowrap;
+  }
+  footer{padding:24px 16px 40px;color:var(--text-dim);font-size:11.5px;line-height:1.6;text-align:center;}
+  .spin{animation:spin 1s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔔 청년센터 새글 알리미</h1>
+  <p>내가 챙겨보는 청년센터 사이트에 새 글이 뜨면 알려드려요</p>
+</header>
+
+<div id="notifBanner"></div>
+
+<div class="toolbar">
+  <button class="pill primary" id="checkBtn">🔄 지금 새 글 확인</button>
+  <button class="pill" id="notifBtn">🔕 알림 꺼짐</button>
+</div>
+<div id="lastChecked"></div>
+
+<div class="section">
+  <h2>🆕 새 글 피드</h2>
+  <div id="feedList"></div>
+</div>
+
+<div class="section">
+  <h2>📌 사이트 목록 / 상태</h2>
+  <div id="siteList"></div>
+</div>
+
+<footer>
+  내 아이폰에만 저장되는 개인용 도구예요. 서버 없이 브라우저 안에서만 동작하며,<br>
+  일부 사이트는 구조상 자동 감지가 어려워 "바로가기"만 제공돼요.<br><br>
+  홈 화면에 추가해두고, 가끔 앱을 열어서 "지금 새 글 확인"을 눌러주세요.
+</footer>
+
+<script>
+/* ===================== 설정: 사이트 목록 ===================== */
+const SITES = [
+  {
+    id: 'dgjump',
+    name: '젬프 (대구청년센터)',
+    listUrl: 'https://www.dgjump.com/open_content/info/info_list_01',
+    baseUrl: 'https://www.dgjump.com',
+    detect: true,
+    linkPattern: 'info_list_01_view',
+    idParam: 'ap_seq'
+  },
+  {
+    id: 'namgu',
+    name: '남구청년센터',
+    listUrl: 'https://youthnamgu.com/Program?menuId=MENU_0000000366',
+    baseUrl: 'https://youthnamgu.com',
+    detect: true,
+    linkPattern: 'UserPrgm/view.do',
+    idParam: 'PRGM_ID'
+  },
+  {
+    id: 'bukgu-noti',
+    name: '북구청년센터 · 공지사항',
+    listUrl: 'https://www.bukguyouth.kr/notification',
+    baseUrl: 'https://www.bukguyouth.kr',
+    detect: 'title-only',
+    note: '사이트 구조상 글마다 개별 링크가 없어요. 새 제목은 감지되지만 클릭하면 목록 페이지로 이동해요.'
+  },
+  {
+    id: 'bukgu-comm',
+    name: '북구청년센터 · 지금 모집중',
+    listUrl: 'https://www.bukguyouth.kr/community',
+    baseUrl: 'https://www.bukguyouth.kr',
+    detect: 'title-only',
+    note: '사이트 구조상 글마다 개별 링크가 없어요. 새 제목은 감지되지만 클릭하면 목록 페이지로 이동해요.'
+  },
+  {
+    id: 'dyouth',
+    name: '동구청년센터',
+    listUrl: 'https://d-youth.or.kr/program?category1=1',
+    detect: false,
+    note: '자바스크립트로 목록을 그리는 사이트라 지금은 자동 감지가 어려워요. 바로가기만 제공돼요.'
+  },
+  {
+    id: 'bukseongro',
+    name: '북성로청년센터',
+    listUrl: 'https://bukseongro.or.kr/프로그램-신청/',
+    detect: false,
+    note: '자바스크립트로 목록을 그리는 사이트라 지금은 자동 감지가 어려워요. 바로가기만 제공돼요.'
+  },
+  {
+    id: 'suseong',
+    name: '수성구청년센터',
+    listUrl: 'https://www.suseongyouth.or.kr/content/02program/01_01.php?ptype=ing',
+    detect: false,
+    note: '자동 접속을 막는 보안 절차(사람 확인)가 있어서 자동 감지가 어려워요. 바로가기만 제공돼요.'
+  }
+];
+
+const PROXY = 'https://api.allorigins.win/raw?url=';
+const FEED_KEY = 'yc_feed_v1';
+const READ_KEY = 'yc_read_v1';
+const MAX_FEED = 150;
+
+/* ===================== 유틸 ===================== */
+function loadFeed(){
+  try{ return JSON.parse(localStorage.getItem(FEED_KEY) || '[]'); }catch(e){ return []; }
+}
+function saveFeed(feed){
+  localStorage.setItem(FEED_KEY, JSON.stringify(feed.slice(0, MAX_FEED)));
+}
+function loadRead(){
+  try{ return new Set(JSON.parse(localStorage.getItem(READ_KEY) || '[]')); }catch(e){ return new Set(); }
+}
+function saveRead(set){
+  localStorage.setItem(READ_KEY, JSON.stringify(Array.from(set)));
+}
+function seenKey(siteId){ return 'yc_seen_' + siteId; }
+function loadSeen(siteId){
+  const raw = localStorage.getItem(seenKey(siteId));
+  return raw === null ? null : JSON.parse(raw);
+}
+function saveSeen(siteId, ids){
+  localStorage.setItem(seenKey(siteId), JSON.stringify(ids));
+}
+function timeAgo(ts){
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000);
+  if(m < 1) return '방금 전';
+  if(m < 60) return m + '분 전';
+  const h = Math.floor(m/60);
+  if(h < 24) return h + '시간 전';
+  const d = Math.floor(h/24);
+  return d + '일 전';
+}
+function cleanTitle(raw){
+  let t = raw.replace(/\s+/g,' ').trim();
+  t = t.replace(/^(진행중|마감|접수마감|D-\d+\s*모집중?|D-\d+)\s*/,'');
+  if(t.length > 70) t = t.slice(0,70) + '…';
+  return t;
+}
+
+/* ===================== 사이트별 파싱 ===================== */
+async function fetchHtml(url){
+  const res = await fetch(PROXY + encodeURIComponent(url));
+  if(!res.ok) throw new Error('네트워크 오류 ' + res.status);
+  return await res.text();
+}
+
+async function parseLinkSite(site){
+  const html = await fetchHtml(site.listUrl);
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const anchors = Array.from(doc.querySelectorAll('a[href*="' + site.linkPattern + '"]'));
+  const seenInPass = new Set();
+  const items = [];
+  anchors.forEach(a=>{
+    const href = a.getAttribute('href');
+    if(!href) return;
+    let absUrl;
+    try{ absUrl = new URL(href, site.baseUrl).href; }catch(e){ return; }
+    let id;
+    try{
+      const u = new URL(absUrl);
+      id = u.searchParams.get(site.idParam) || absUrl;
+    }catch(e){ id = absUrl; }
+    if(seenInPass.has(id)) return;
+    seenInPass.add(id);
+    const title = cleanTitle(a.textContent || '(제목 없음)');
+    items.push({ id, title, url: absUrl });
+  });
+  return items;
+}
+
+async function parseTitleOnlySite(site){
+  // 개별 링크가 없는 사이트: 제목 텍스트만으로 새 글 여부 판단
+  const html = await fetchHtml(site.listUrl);
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  // 이미지에 alt 텍스트가 있거나, 텍스트 노드가 짧고 반복되는 블록 위주로 후보 추출
+  const candidates = new Set();
+  doc.querySelectorAll('img[alt]').forEach(img=>{
+    const alt = (img.getAttribute('alt')||'').trim();
+    if(alt.length > 3 && alt.length < 80) candidates.add(alt);
+  });
+  // 본문 영역의 짧은 텍스트 블록도 후보로 (제목처럼 보이는 것)
+  doc.querySelectorAll('body *').forEach(el=>{
+    if(el.children.length === 0){
+      const t = (el.textContent||'').trim();
+      if(t.length > 4 && t.length < 60 && !/^(센터|공지|공간|커뮤니티|청년|메뉴|바로가기)$/.test(t)){
+        candidates.add(t);
+      }
+    }
+  });
+  return Array.from(candidates).slice(0, 40).map(title=>({
+    id: title,
+    title: cleanTitle(title),
+    url: site.listUrl
+  }));
+}
+
+/* ===================== 상태 렌더 ===================== */
+const siteStatus = {}; // id -> {state:'idle'|'ok'|'error', msg}
+
+function renderSites(){
+  const box = document.getElementById('siteList');
+  box.innerHTML = '';
+  SITES.forEach(site=>{
+    const row = document.createElement('div');
+    row.className = 'site-row';
+    const st = siteStatus[site.id];
+    let statusHtml;
+    if(site.detect === false){
+      statusHtml = '<span class="status-off">⏭ 자동 감지 미지원</span>';
+    } else if(site.detect === 'title-only'){
+      statusHtml = st && st.state==='error'
+        ? '<span class="status-warn">⚠ 확인 실패</span>'
+        : '<span class="status-warn">⚠ 부분 지원 (링크 없음)</span>';
+    } else if(!st){
+      statusHtml = '<span class="status-off">대기 중</span>';
+    } else if(st.state === 'ok'){
+      statusHtml = '<span class="status-ok">✅ ' + st.msg + '</span>';
+    } else if(st.state === 'checking'){
+      statusHtml = '<span class="status-off">⏳ 확인 중…</span>';
+    } else {
+      statusHtml = '<span class="status-warn">⚠ ' + st.msg + '</span>';
+    }
+    row.innerHTML = `
+      <div class="info">
+        <div class="site-name">${site.name}</div>
+        <div class="site-status">${statusHtml}</div>
+      </div>
+      <a class="goto" href="${site.listUrl}" target="_blank" rel="noopener">바로가기</a>
+    `;
+    box.appendChild(row);
+  });
+}
+
+function renderFeed(){
+  const feed = loadFeed();
+  const read = loadRead();
+  const box = document.getElementById('feedList');
+  box.innerHTML = '';
+  if(feed.length === 0){
+    box.innerHTML = '<div class="empty">아직 감지된 새 글이 없어요.<br>상단의 "지금 새 글 확인"을 눌러보세요.</div>';
+    return;
+  }
+  feed.forEach(item=>{
+    const a = document.createElement('a');
+    const key = item.site + '::' + item.id;
+    const unread = !read.has(key);
+    a.className = 'feed-item' + (unread ? ' unread' : '');
+    a.href = item.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = `
+      <div class="feed-site">${item.siteName}</div>
+      <div class="feed-title">${item.title}</div>
+      <div class="feed-time">${timeAgo(item.ts)}</div>
+    `;
+    a.addEventListener('click', ()=>{
+      read.add(key);
+      saveRead(read);
+    });
+    box.appendChild(a);
+  });
+}
+
+function renderLastChecked(){
+  const ts = localStorage.getItem('yc_last_checked');
+  const el = document.getElementById('lastChecked');
+  el.textContent = ts ? ('마지막 확인: ' + timeAgo(parseInt(ts,10))) : '';
+}
+
+/* ===================== 새 글 확인 로직 ===================== */
+async function checkSite(site){
+  siteStatus[site.id] = { state:'checking' };
+  renderSites();
+  try{
+    let items;
+    if(site.detect === true){
+      items = await parseLinkSite(site);
+    } else if(site.detect === 'title-only'){
+      items = await parseTitleOnlySite(site);
+    } else {
+      return [];
+    }
+
+    const stored = loadSeen(site.id);
+    const currentIds = items.map(i=>i.id);
+
+    if(stored === null){
+      // 첫 실행: 기준선만 저장, 새 글로 알리지 않음
+      saveSeen(site.id, currentIds);
+      siteStatus[site.id] = { state:'ok', msg: '기준 데이터 저장 완료 (' + items.length + '건)' };
+      renderSites();
+      return [];
+    }
+
+    const storedSet = new Set(stored);
+    const fresh = items.filter(i=>!storedSet.has(i.id));
+    saveSeen(site.id, currentIds);
+    siteStatus[site.id] = { state:'ok', msg: '정상 (' + items.length + '건 확인)' };
+    renderSites();
+    return fresh.map(i=>({ ...i, site: site.id, siteName: site.name }));
+  }catch(err){
+    console.error(site.id, err);
+    siteStatus[site.id] = { state:'error', msg: '확인 실패' };
+    renderSites();
+    return [];
+  }
+}
+
+async function checkAll(){
+  const btn = document.getElementById('checkBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">🔄</span> 확인 중…';
+
+  const detectable = SITES.filter(s=> s.detect === true || s.detect === 'title-only');
+  let allNew = [];
+  for(const site of detectable){
+    const fresh = await checkSite(site);
+    allNew = allNew.concat(fresh);
+  }
+
+  if(allNew.length){
+    const feed = loadFeed();
+    const now = Date.now();
+    const withTs = allNew.map(i=>({ ...i, ts: now }));
+    const merged = [...withTs, ...feed].slice(0, MAX_FEED);
+    saveFeed(merged);
+    renderFeed();
+    fireNotification(allNew);
+  }
+
+  localStorage.setItem('yc_last_checked', String(Date.now()));
+  renderLastChecked();
+
+  btn.disabled = false;
+  btn.innerHTML = '🔄 지금 새 글 확인';
+}
+
+/* ===================== 알림 ===================== */
+function fireNotification(items){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  try{
+    if(items.length === 1){
+      new Notification('새 글: ' + items[0].siteName, { body: items[0].title });
+    } else {
+      const bodyLines = items.slice(0,4).map(i=>'· ' + i.title);
+      if(items.length > 4) bodyLines.push('외 ' + (items.length-4) + '건');
+      new Notification('새 글 ' + items.length + '건 등록됨', { body: bodyLines.join('\n') });
+    }
+  }catch(e){ console.error(e); }
+}
+
+function renderNotifBanner(){
+  const el = document.getElementById('notifBanner');
+  const btn = document.getElementById('notifBtn');
+  if(!('Notification' in window)){
+    btn.textContent = '🔕 이 브라우저는 알림 미지원';
+    btn.disabled = true;
+    el.innerHTML = '';
+    return;
+  }
+  if(Notification.permission === 'granted'){
+    btn.textContent = '🔔 알림 켜짐';
+  } else {
+    btn.textContent = '🔕 알림 켜기';
+  }
+  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if(!standalone){
+    el.innerHTML = `<div class="notif-banner">
+      <span>아이폰 알림은 "홈 화면에 추가"로 앱처럼 실행할 때만 정상 동작해요.</span>
+    </div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+document.getElementById('notifBtn').addEventListener('click', async ()=>{
+  if(!('Notification' in window)) return;
+  const perm = await Notification.requestPermission();
+  renderNotifBanner();
+  if(perm === 'granted'){
+    new Notification('알림이 켜졌어요 🎉', { body: '새 글이 뜨면 알려드릴게요.' });
+  }
+});
+
+document.getElementById('checkBtn').addEventListener('click', checkAll);
+
+/* ===================== 초기화 ===================== */
+renderSites();
+renderFeed();
+renderLastChecked();
+renderNotifBanner();
+
+// 앱을 열 때 자동으로 한 번 확인 (마지막 확인이 5분 이상 지났으면)
+const last = parseInt(localStorage.getItem('yc_last_checked') || '0', 10);
+if(Date.now() - last > 5*60*1000){
+  checkAll();
+}
+
+// 앱이 다시 포그라운드로 올 때도 확인
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    const l = parseInt(localStorage.getItem('yc_last_checked') || '0', 10);
+    if(Date.now() - l > 5*60*1000) checkAll();
+  }
+});
+
+// 앱을 켜둔 동안 10분마다 자동 확인
+setInterval(checkAll, 10*60*1000);
+</script>
+</body>
+</html>
